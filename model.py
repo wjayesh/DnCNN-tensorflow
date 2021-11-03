@@ -4,12 +4,12 @@ import numpy as np
 import tensorflow as tf
 import random
 import os
-import cv2
+from cv2 import cv2
 
 def dncnn(input, is_training=True, output_channels=3):
     with tf.variable_scope('block1'):
         output = tf.layers.conv2d(input, 64, 3, padding='same', activation=tf.nn.relu)
-    for layers in xrange(2, 19+1):
+    for layers in range(2, 19+1):
         with tf.variable_scope('block%d' % layers):
             output = tf.layers.conv2d(output, 64, 3, padding='same', name='conv%d' % layers, use_bias=False)
             output = tf.nn.relu(tf.layers.batch_normalization(output, training=is_training))   
@@ -48,7 +48,7 @@ class denoiser(object):
         print("[*] Evaluating...")
         psnr_sum = 0
         
-        for i in xrange(10):
+        for i in range(10):
             clean_image = cv2.imread(eval_files[i])
             clean_image = clean_image.astype('float32') / 255.0
             clean_image = clean_image[np.newaxis, ...]
@@ -94,10 +94,10 @@ class denoiser(object):
         print("[*] Start training, with start epoch %d start iter %d : " % (start_epoch, iter_num))
         start_time = time.time()
         self.evaluate(iter_num, eval_files, noisy_files, summary_writer=writer)  # eval_data value range is 0-255
-        for epoch in xrange(start_epoch, epoch):
+        for epoch in range(start_epoch, epoch):
             batch_noisy = np.zeros((batch_size,64,64,3),dtype='float32')
             batch_images = np.zeros((batch_size,64,64,3),dtype='float32')
-            for batch_id in xrange(start_step, numBatch):
+            for batch_id in range(start_step, numBatch):
               try:
                 res = self.dataset.get_batch() # If we get an error retrieving a batch of patches we have to reinitialize the dataset
               except KeyboardInterrupt:
@@ -165,7 +165,7 @@ class denoiser(object):
         print(" [*] Load weights SUCCESS...")
         psnr_sum = 0
             
-        for i in xrange(len(eval_files)):
+        for i in range(len(eval_files)):
             clean_image = cv2.imread(eval_files[i])
             clean_image = clean_image.astype('float32') / 255.0
             clean_image = clean_image[np.newaxis, ...]
@@ -201,7 +201,7 @@ class dataset(object):
     random.shuffle(ind)
     
     filenames = list()
-    for i in xrange(len(filepaths)):
+    for i in range(len(filepaths)):
         filenames.append(filepaths_noisy[ind[i]])
         filenames.append(filepaths[ind[i]])
 
