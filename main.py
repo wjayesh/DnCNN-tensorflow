@@ -7,7 +7,7 @@ import os
 import numpy as np
 
 parser = argparse.ArgumentParser(description='')
-parser.add_argument('--epoch', dest='epoch', type=int, default=10, help='# of epochs')
+parser.add_argument('--epoch', dest='epoch', type=int, default=5, help='# of epochs')
 parser.add_argument('--batch_size', dest='batch_size', type=int, default=100, help='# images in batch')
 parser.add_argument('--lr', dest='lr', type=float, default=0.001, help='initial learning rate for adam')
 parser.add_argument('--use_gpu', dest='use_gpu', type=int, default=1, help='gpu flag, 1 for GPU and 0 for CPU')
@@ -28,15 +28,15 @@ def denoiser_train(denoiser, lr):
 def denoiser_test(denoiser):
 
     noisy_eval_files = glob('./data/test/noisy/*.png')
-#    n = [int(i) for i in map(lambda x: x.split('/')[-1].split('.png')[0], noisy_eval_files)]
-#    noisy_eval_files = [x for (y, x) in sorted(zip(n, noisy_eval_files))]
+    # n = [int(i) for i in map(lambda x: x.split('/')[-1].split('.png')[0], noisy_eval_files)]
+    # noisy_eval_files = [x for (y, x) in sorted(zip(n, noisy_eval_files))]
     noisy_eval_files = sorted(noisy_eval_files)
     eval_files = glob('./data/test/original/*.png')
     eval_files = sorted(eval_files)
     start = time.time()
     denoiser.test(eval_files, noisy_eval_files, ckpt_dir=args.ckpt_dir, save_dir='./data/denoised', temporal=args.temporal)
     end = time.time()
-    print "Elapsed time:", end-start
+    print("Elapsed time:", end-start)
 
 def main(_):
     if not os.path.exists(args.ckpt_dir):
