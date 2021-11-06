@@ -7,40 +7,40 @@ import os
 from cv2 import cv2
 
 def dncnn(input, is_training=True, output_channels=3):
-    with tf.variable_scope('block1'):
-        output = tf.layers.conv2d(input, 64, 3, padding='same', activation=tf.nn.relu)
+    with tf.compat.v1.variable_scope('block1'):
+        output = tf.compat.v1.layers.conv2d(input, 64, 3, padding='same', activation=tf.compat.v1.nn.relu)
     for layers in range(2, 19+1):
-        with tf.variable_scope('block%d' % layers):
-            output = tf.layers.conv2d(output, 64, 3, padding='same', name='conv%d' % layers, use_bias=False)
-            output = tf.nn.relu(tf.layers.batch_normalization(output, training=is_training))   
-    with tf.variable_scope('block17'):
-        output = tf.layers.conv2d(output, output_channels, 3, padding='same',use_bias=False)
+        with tf.compat.v1.variable_scope('block%d' % layers):
+            output = tf.compat.v1.layers.conv2d(output, 64, 3, padding='same', name='conv%d' % layers, use_bias=False)
+            output = tf.compat.v1.nn.relu(tf.compat.v1.layers.batch_normalization(output, training=is_training))   
+    with tf.compat.v1.variable_scope('block17'):
+        output = tf.compat.v1.layers.conv2d(output, output_channels, 3, padding='same',use_bias=False)
     return input - output
 
 filepaths = glob('./data/train/original/*.png') #takes all the paths of the png files in the train folder
 filepaths = sorted(filepaths)                           #Order the list of files
 filepaths_noisy = glob('./data/train/noisy/*.png')
 filepaths_noisy = sorted(filepaths_noisy)
-ind = range(len(filepaths))
+ind = list(range(len(filepaths)))
 
 class denoiser(object):
     def __init__(self, sess, input_c_dim=3, batch_size=128):
         self.sess = sess
         self.input_c_dim = input_c_dim
         # build model
-        self.Y_ = tf.placeholder(tf.float32, [None, None, None, self.input_c_dim],
+        self.Y_ = tf.compat.v1.placeholder(tf.compat.v1.float32, [None, None, None, self.input_c_dim],
                                  name='clean_image')
-        self.is_training = tf.placeholder(tf.bool, name='is_training')
-        self.X = tf.placeholder(tf.float32, [None, None, None, self.input_c_dim])
+        self.is_training = tf.compat.v1.placeholder(tf.compat.v1.bool, name='is_training')
+        self.X = tf.compat.v1.placeholder(tf.compat.v1.float32, [None, None, None, self.input_c_dim])
         self.Y = dncnn(self.X, is_training=self.is_training)
-        self.loss = (1.0 / batch_size) * tf.nn.l2_loss(self.Y_ - self.Y)
-        self.lr = tf.placeholder(tf.float32, name='learning_rate')
+        self.loss = (1.0 / batch_size) * tf.compat.v1.nn.l2_loss(self.Y_ - self.Y)
+        self.lr = tf.compat.v1.placeholder(tf.compat.v1.float32, name='learning_rate')
         self.dataset = dataset(sess)
-        optimizer = tf.train.AdamOptimizer(self.lr, name='AdamOptimizer')
-        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-        with tf.control_dependencies(update_ops):
+        optimizer = tf.compat.v1.compat.v1.train.AdamOptimizer(self.lr, name='AdamOptimizer')
+        update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
+        with tf.compat.v1.control_dependencies(update_ops):
             self.train_op = optimizer.minimize(self.loss)
-        init = tf.global_variables_initializer()
+        init = tf.compat.v1.global_variables_initializer()
         self.sess.run(init)
         print("[*] Initialize model successfully...")
 
@@ -85,11 +85,11 @@ class denoiser(object):
             start_step = 0
             print("[*] Not find pretrained model!")
         # make summary
-        tf.summary.scalar('loss', self.loss)
-        tf.summary.scalar('lr', self.lr)
-        writer = tf.summary.FileWriter('./logs', self.sess.graph)
-        merged = tf.summary.merge_all()
-        clip_all_weights = tf.get_collection("max_norm")        
+        tf.compat.v1.summary.scalar('loss', self.loss)
+        tf.compat.v1.summary.scalar('lr', self.lr)
+        writer = tf.compat.v1.summary.FileWriter('./logs', self.sess.graph)
+        merged = tf.compat.v1.summary.merge_all()
+        clip_all_weights = tf.compat.v1.get_collection("max_norm")        
 
         print("[*] Start training, with start epoch %d start iter %d : " % (start_epoch, iter_num))
         start_time = time.time()
@@ -108,7 +108,7 @@ class denoiser(object):
               if batch_id==0:
                 batch_noisy = np.zeros((batch_size,64,64,3),dtype='float32')
                 batch_images = np.zeros((batch_size,64,64,3),dtype='float32')
-              ind1 = range(res.shape[0]/2)
+              ind1 = list(range(res.shape[0]/2))
               ind1 = np.multiply(ind1,2)
               for i in range(batch_size):
                 random.shuffle(ind1)
@@ -134,7 +134,7 @@ class denoiser(object):
         print("[*] Training finished.")
 
     def save(self, iter_num, ckpt_dir, model_name='DnCNN-tensorflow'):
-        saver = tf.train.Saver()
+        saver = tf.compat.v1.train.Saver()
         checkpoint_dir = ckpt_dir
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir)
@@ -145,10 +145,10 @@ class denoiser(object):
 
     def load(self, checkpoint_dir):
         print("[*] Reading checkpoint...")
-        saver = tf.train.Saver()
-        ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+        saver = tf.compat.v1.train.Saver()
+        ckpt = tf.compat.v1.train.get_checkpoint_state(checkpoint_dir)
         if ckpt and ckpt.model_checkpoint_path:
-            full_path = tf.train.latest_checkpoint(checkpoint_dir)
+            full_path = tf.compat.v1.train.latest_checkpoint(checkpoint_dir)
             global_step = int(full_path.split('/')[-1].split('-')[-1])
             saver.restore(self.sess, full_path)
             return True, global_step
@@ -158,7 +158,7 @@ class denoiser(object):
     def test(self, eval_files, noisy_files, ckpt_dir, save_dir, temporal):
         """Test DnCNN"""
         # init variables
-        tf.global_variables_initializer().run()
+        tf.compat.v1.global_variables_initializer().run()
         assert len(eval_files) != 0, 'No testing data!'
         load_model_status, global_step = self.load(ckpt_dir)
         assert load_model_status == True, '[!] Load weights FAILED...'
@@ -212,7 +212,7 @@ class dataset(object):
     batch_size = 32                # size of the batch
     get_patches_fn = lambda image: get_patches(image, num_patches=num_patches, patch_size=patch_size)
     dataset = (
-        tf.data.Dataset.from_tensor_slices(filenames)
+        tf.compat.v1.data.Dataset.from_tensor_slices(filenames)
         .map(im_read, num_parallel_calls=num_parallel_calls)
         .map(get_patches_fn, num_parallel_calls=num_parallel_calls)
         .batch(batch_size)
@@ -229,10 +229,10 @@ class dataset(object):
         
 def im_read(filename):
     """Decode the png image from the filename and convert to [0, 1]."""
-    image_string = tf.read_file(filename)
-    image_decoded = tf.image.decode_png(image_string, channels=3)
+    image_string = tf.compat.v1.read_file(filename)
+    image_decoded = tf.compat.v1.image.decode_png(image_string, channels=3)
     # This will convert to float values in [0, 1]
-    image = tf.image.convert_image_dtype(image_decoded, tf.float32)
+    image = tf.compat.v1.image.convert_image_dtype(image_decoded, tf.compat.v1.float32)
     return image
     
 def get_patches(image, num_patches=128, patch_size=64):
@@ -241,9 +241,9 @@ def get_patches(image, num_patches=128, patch_size=64):
     for i in range(num_patches):
       point1 = random.randint(0,116) # 116 comes from the image source size (180) - the patch dimension (64)
       point2 = random.randint(0,116)
-      patch = tf.image.crop_to_bounding_box(image, point1, point2, patch_size, patch_size)
+      patch = tf.compat.v1.image.crop_to_bounding_box(image, point1, point2, patch_size, patch_size)
       patches.append(patch)
-    patches = tf.stack(patches)
+    patches = tf.compat.v1.stack(patches)
     assert patches.get_shape().dims == [num_patches, patch_size, patch_size, 3]
     return patches
     
