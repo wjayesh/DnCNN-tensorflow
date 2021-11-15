@@ -108,7 +108,7 @@ class denoiser(object):
               if batch_id==0:
                 batch_noisy = np.zeros((batch_size,64,64,3),dtype='float32')
                 batch_images = np.zeros((batch_size,64,64,3),dtype='float32')
-              ind1 = list(range(res.shape[0]/2))
+              ind1 = list(range(int(res.shape[0]/2)))
               ind1 = np.multiply(ind1,2)
               for i in range(batch_size):
                 random.shuffle(ind1)
