@@ -42,7 +42,7 @@ class denoiser(object):
             self.train_op = optimizer.minimize(self.loss)
         init = tf.compat.v1.global_variables_initializer()
         self.sess.run(init)
-        print("[*] Initialize model successfully...")
+        print("[*] Initialized model successfully...")
 
     def evaluate(self, iter_num, eval_files, noisy_files, summary_writer):
         print("[*] Evaluating...")
@@ -78,12 +78,12 @@ class denoiser(object):
             iter_num = global_step
             start_epoch = global_step // numBatch
             start_step = global_step % numBatch
-            print("[*] Model restore success!")
+            print("[*] Model restoration success!")
         else:
             iter_num = 0
             start_epoch = 0
             start_step = 0
-            print("[*] Not find pretrained model!")
+            print("[*] Didn't find pretrained model!")
         # make summary
         tf.compat.v1.summary.scalar('loss', self.loss)
         tf.compat.v1.summary.scalar('lr', self.lr)
